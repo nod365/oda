@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Виртуальный Радио Ведущий</title>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #111;
+      color: #0f0;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #0ff;
+    }
+
+    .track {
+      margin-bottom: 10px;
+    }
+
+    .playing {
+      color: yellow;
+    }
+  </style>
+</head>
+
+<body>
+  <h2>Загрузите ZIP с контентом</h2>
+  <input type="file" id="zipInput" accept=".zip" />
+  <div id="status">⏳ Ожидание загрузки...</div>
+  <h1>🎙️ </h1>
+  <div id="now-playing"></div>
+  <button id="skipButton">⏭️ Пропустить</button>
+  <h2>Очередь</h2>
+  <div id="queue"></div>
+
+  <script>
+    const musicAudio = new Audio();
+    const voiceAudio = new Audio();
+    const miscAudio = new Audio();
+
+    voiceAudio.volume = 1;
+    musicAudio.volume = 1;
+
+    let queue = [];
+    let playIndex = 0;
+    let currentHour = new Date().getHours();
+
+    let SONGS = {};
+    let JINGLES = [];
+    let ADS = [];
+    let DTMF = {};
+
+    let shuffledAds = [];
+    let shuffledJingles = [];
+    let adIndex = 0;
+    let jingleIndex = 0;
+    let originalSongs = [];
+    let songsSinceLastJingle = 0;
+
+    const QUEUE_AHEAD = 10;
+    const hourSounds = {};
+    const pathToOriginalFileName = {};
+
+    const shuffle = arr => arr.sort(() => Math.random() - 0.5);
+    const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+    const extractFileName = path => pathToOriginalFileName[path] || path.split('/').pop() || '';
+
+    function initOriginalSongs() {
+      originalSongs = shuffle(Object.entries(SONGS));
+    }
+
+    function getNextAd() {
+      if (shuffledAds.length === 0) shuffledAds = shuffle(ADS.slice());
+      const index = adIndex++;
+      return {
+        src: shuffledAds[index % shuffledAds.length],
+        endType: index % 2 === 0 ? 'even' : 'odd'
+      };
+    }
+
+    function getNextJingle() {
+      if (shuffledJingles.length === 0) shuffledJingles = shuffle(JINGLES.slice());
+      return shuffledJingles[jingleIndex++ % shuffledJingles.length];
+    }
+
+    function addTracksToQueue(count) {
+      if (originalSongs.length === 0) initOriginalSongs();
+
+      for (let i = 0; i < count; i++) {
+        if (originalSongs.length === 0) initOriginalSongs();
+
+        let found = false;
+        let title, data;
+
+        while (originalSongs.length > 0 && !found) {
+          [title, data] = originalSongs.shift();
+          if (!queue.slice(playIndex).some(item => item.title === title && item.type === 'song')) {
+            found = true;
+          }
+        }
+
+        if (!found) continue;
+
+        queue.push({
+          type: 'song',
+          title,
+          songSrc: data.link,
+          fileName: extractFileName(data.link),
+          comments: Object.entries(data.comments || {}).map(([k, v]) => ({
+            name: k,
+            src: v,
+            fileName: extractFileName(v)
+          }))
+        });
+
+        songsSinceLastJingle++;
+        if (songsSinceLastJingle >= 2 && JINGLES.length) {
+          const jingle = getNextJingle();
+          queue.push({ type: 'jingle', title: '🎵 Джингл', songSrc: jingle, fileName: extractFileName(jingle) });
+          songsSinceLastJingle = 0;
+        }
+
+        const songsCount = queue.filter(item => item.type === 'song').length;
+        if (songsCount > 0 && songsCount % 4 === 0 && ADS.length) {
+          const ad = getNextAd();
+          queue.push({
+            type: 'ad',
+            title: '📢 Реклама',
+            songSrc: ad.src,
+            fileName: extractFileName(ad.src),
+            adEndType: ad.endType // 👈 добавляем
+          });
+        }
+      }
+    }
+
+    const updateDisplay = () => {
+      const nowDiv = document.getElementById('now-playing');
+      const queueDiv = document.getElementById('queue');
+      const current = queue[playIndex] || {};
+      nowDiv.innerHTML = `<div class="playing">🎧 Сейчас: ${current?.title || '---'} (${current?.fileName || ''})</div>`;
+      queueDiv.innerHTML = queue.slice(playIndex + 1, playIndex + 10).map((item, i) => {
+        let icon = '';
+        if (item.type === 'ad') icon = '📢';
+        else if (item.type === 'jingle') icon = '🎵';
+        else if (item.type === 'hour-signal') icon = '🕒';
+        return `<div class="track">${i + 1}) ${item.title} ${icon} (${item.fileName || ''})</div>`;
+      }).join('');
+    };
+
+    let hourSignalPending = false;
+
+    const checkAndQueueHourSound = () => {
+      const hour = new Date().getHours();
+      if (hour !== currentHour && hourSounds[hour]) {
+        currentHour = hour;
+        hourSignalPending = true;
+      }
+    };
+
+    const playAudio = (src) => {
+      return new Promise(resolve => {
+        miscAudio.pause();
+        miscAudio.src = src;
+        miscAudio.volume = 1;
+        miscAudio.onended = resolve;
+        miscAudio.play();
+      });
+    };
+
+    const playNext = async () => {
+      if (queue.length - playIndex < QUEUE_AHEAD) {
+        addTracksToQueue(QUEUE_AHEAD - (queue.length - playIndex));
+      }
+
+      updateDisplay();
+      if (playIndex >= queue.length) return;
+
+      if (hourSignalPending) {
+        queue.splice(playIndex, 0, {
+          type: 'hour-signal',
+          title: `🕒 Сигнал ${currentHour}:00`,
+          songSrc: hourSounds[currentHour],
+          fileName: `h (${currentHour}).mp3`
+        });
+        hourSignalPending = false;
+      }
+
+      const item = queue[playIndex];
+      playIndex++;
+
+      if (item.type === 'song') {
+        const songData = SONGS[item.title];
+        const together = songData.together === 1;
+        const hasComment = item.comments.length > 0;
+
+        let comment;
+        if (hasComment) {
+          comment = item.comments[Math.floor(Math.random() * item.comments.length)];
+          voiceAudio.src = comment.src;
+        }
+
+        if (together) {
+          musicAudio.src = item.songSrc;
+          musicAudio.play();
+          if (hasComment) {
+            await delay(500);
+            for (let v = 1; v >= 0.3; v -= 0.05) {
+              musicAudio.volume = v;
+              await delay(30);
+            }
+            voiceAudio.play();
+            await new Promise(resolve => voiceAudio.onended = resolve);
+            for (let v = 0.3; v <= 1; v += 0.05) {
+              musicAudio.volume = v;
+              await delay(30);
+            }
+          }
+          await new Promise(resolve => musicAudio.onended = resolve);
+        } else {
+          if (hasComment) {
+            voiceAudio.play();
+            await new Promise(resolve => voiceAudio.onended = resolve);
+          }
+          musicAudio.src = item.songSrc;
+          musicAudio.play();
+          await new Promise(resolve => musicAudio.onended = resolve);
+        }
+      } else if (item.type === 'ad') {
+        await playAudio(DTMF.adStart);
+        await playAudio(item.songSrc);
+        await playAudio(item.adEndType === 'even' ? DTMF.adEndEven : DTMF.adEndOdd); // 👈 теперь правильно
+      } else if (item.type === 'jingle') {
+        await playAudio(item.songSrc);
+      } else if (item.type === 'hour-signal') {
+        await playAudio(item.songSrc);
+        await playAudio(DTMF.newHour);
+      }
+
+      checkAndQueueHourSound();
+      playNext();
+    };
+
+    document.getElementById('zipInput').addEventListener('change', async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      document.getElementById('status').textContent = "📦 Распаковка ZIP...";
+      const zip = await JSZip.loadAsync(file);
+      const blobs = {};
+
+      for (const path of Object.keys(zip.files)) {
+        const file = zip.files[path];
+        if (!file.dir) {
+          const blob = await file.async('blob');
+          const blobUrl = URL.createObjectURL(blob);
+          blobs[path] = blobUrl;
+          pathToOriginalFileName[blobUrl] = path.split('/').pop();
+        }
+      }
+
+      const contentRaw = await zip.file("content.js").async("string");
+      const wrapperFn = new Function("global", contentRaw);
+      wrapperFn(window);
+
+      SONGS = window.SONGS;
+      JINGLES = window.JINGLES.map(name => blobs[`j/${name}`]);
+      ADS = window.ADS.map(name => blobs[`ads/${name}`]);
+      DTMF = Object.fromEntries(Object.entries(window.DTMF).map(([k, v]) => [k, blobs[v]]));
+      RANDOM = (window.RANDOM || []).map(name => blobs[`random/${name}`]);
+
+      for (const [title, songData] of Object.entries(SONGS)) {
+        songData.link = blobs[`songs/${songData.link}`];
+
+        // Заменим пустые комментарии случайным из RANDOM
+        const commentKeys = Object.keys(songData.comments || {});
+        if (commentKeys.length === 0 && RANDOM.length > 0) {
+          const randomIndex = Math.floor(Math.random() * RANDOM.length);
+          songData.comments = {
+            случайный: RANDOM[randomIndex]
+          };
+        } else {
+          for (const key in songData.comments) {
+            songData.comments[key] = blobs[`songs/${songData.comments[key]}`];
+          }
+        }
+      }
+
+      for (let h = 0; h < 24; h++) {
+        const key = `h/${h}.mp3`;
+        if (blobs[key]) hourSounds[h] = blobs[key];
+      }
+
+      document.getElementById('status').textContent = "✅ ZIP загружен. Запуск эфира...";
+      initOriginalSongs();
+      addTracksToQueue(QUEUE_AHEAD);
+
+      document.getElementById('skipButton').addEventListener('click', () => {
+        // Остановить оба плеера
+        musicAudio.pause();
+        musicAudio.currentTime = 0;
+        voiceAudio.pause();
+        voiceAudio.currentTime = 0;
+        miscAudio.pause();
+        miscAudio.currentTime = 0;
+        
+        // Перейти к следующему треку
+        playNext();
+      });
+
+      setInterval(checkAndQueueHourSound, 10 * 1000);
+      playNext();
+    });
+  </script>
+</body>
+
+</html>
