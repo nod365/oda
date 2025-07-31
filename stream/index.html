@@ -39,33 +39,8 @@
 
   <script>
     const blobsCache = {};
+    // Убираем возможное дублирование объявления — используем глобальный объект
     window.pathToOriginalFileName = window.pathToOriginalFileName || {};
-
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-
-    const createNormalizedAudio = () => {
-      const audio = new Audio();
-      const source = audioContext.createMediaElementSource(audio);
-      const compressor = audioContext.createDynamicsCompressor();
-
-      compressor.threshold.setValueAtTime(-24, audioContext.currentTime);
-      compressor.knee.setValueAtTime(30, audioContext.currentTime);
-      compressor.ratio.setValueAtTime(12, audioContext.currentTime);
-      compressor.attack.setValueAtTime(0.003, audioContext.currentTime);
-      compressor.release.setValueAtTime(0.25, audioContext.currentTime);
-
-      source.connect(compressor);
-      compressor.connect(audioContext.destination);
-
-      return audio;
-    };
-
-    const musicAudioA = createNormalizedAudio();
-    const musicAudioB = createNormalizedAudio();
-    let musicToggle = true;
-
-    const voiceAudio = createNormalizedAudio();
-    const miscAudio = createNormalizedAudio();
 
     async function getBlobUrl(path) {
       if (blobsCache[path]) return blobsCache[path];
@@ -81,6 +56,13 @@
 
       return blobUrl;
     }
+
+    const musicAudio = new Audio();
+    const voiceAudio = new Audio();
+    const miscAudio = new Audio();
+
+    voiceAudio.volume = 1;
+    musicAudio.volume = 1;
 
     let queue = [];
     let playIndex = 0;
@@ -144,11 +126,17 @@
 
         if (!found) continue;
 
+        // Лениво подгружаем аудио песню и комментарии
         const songSrc = await getBlobUrl(`songs/${data.link}`);
 
         let comments = [];
         const commentKeys = Object.keys(data.comments || {});
-        if (commentKeys.length > 0) {
+        if (commentKeys.length === 0 && RANDOM.length > 0) {
+          //const randomIndex = Math.floor(Math.random() * RANDOM.length);
+          //const randomCommentSrc = await getBlobUrl(`random/${RANDOM[randomIndex]}`);
+          //comments = [{ name: 'случайный', src: randomCommentSrc, fileName: extractFileName(randomCommentSrc) }];
+          //console.log('Пусто')
+        } else {
           comments = await Promise.all(
             commentKeys.map(async (k) => {
               const src = await getBlobUrl(`songs/${data.comments[k]}`);
@@ -187,6 +175,7 @@
         }
       }
     }
+
 
     const updateDisplay = () => {
       const nowDiv = document.getElementById('now-playing');
@@ -249,60 +238,34 @@
         const together = songData.together === 1;
         const hasComment = item.comments.length > 0;
 
-        const currentMusic = musicToggle ? musicAudioA : musicAudioB;
-        const nextMusic = !musicToggle ? musicAudioA : musicAudioB;
-        musicToggle = !musicToggle;
-
-        currentMusic.pause();
-        currentMusic.src = item.songSrc;
-        currentMusic.volume = 1;
-
-        if (together && hasComment) {
-          currentMusic.play();
-          voiceAudio.src = item.comments[Math.floor(Math.random() * item.comments.length)].src;
-          await delay(500);
-          for (let v = 1; v >= 0.1; v -= 0.05) {
-            currentMusic.volume = v;
-            await delay(30);
+        if (together) {
+          musicAudio.src = item.songSrc;
+          musicAudio.play();
+          if (hasComment) {
+            voiceAudio.src = item.comments[Math.floor(Math.random() * item.comments.length)].src;
+            await delay(500);
+            for (let v = 1; v >= 0.1; v -= 0.05) {
+              musicAudio.volume = v;
+              await delay(30);
+            }
+            voiceAudio.play();
+            await new Promise(resolve => voiceAudio.onended = resolve);
+            for (let v = 0.1; v <= 1; v += 0.05) {
+              musicAudio.volume = v;
+              await delay(30);
+            }
           }
-          voiceAudio.play();
-          await new Promise(resolve => voiceAudio.onended = resolve);
-          for (let v = 0.1; v <= 1; v += 0.05) {
-            currentMusic.volume = v;
-            await delay(30);
-          }
-          await new Promise(resolve => currentMusic.onended = resolve);
+          await new Promise(resolve => musicAudio.onended = resolve);
         } else {
           if (hasComment) {
             voiceAudio.src = item.comments[Math.floor(Math.random() * item.comments.length)].src;
             voiceAudio.play();
             await new Promise(resolve => voiceAudio.onended = resolve);
           }
-          currentMusic.play();
-          currentMusic.onended = () => playNext();
-
-          // Кроссфейд: за 3 секунды до конца начнем следующий
-          currentMusic.onloadedmetadata = () => {
-            const duration = currentMusic.duration;
-            if (!isNaN(duration)) {
-              setTimeout(async () => {
-                if (queue[playIndex] && queue[playIndex].type === 'song') {
-                  const nextSrc = queue[playIndex].songSrc;
-                  nextMusic.src = nextSrc;
-                  nextMusic.volume = 0;
-                  nextMusic.play();
-                  for (let v = 0; v <= 1; v += 0.05) {
-                    nextMusic.volume = v;
-                    currentMusic.volume = 1 - v;
-                    await delay(100);
-                  }
-                }
-              }, (duration - 3) * 1000);
-            }
-          };
-          return;
+          musicAudio.src = item.songSrc;
+          musicAudio.play();
+          await new Promise(resolve => musicAudio.onended = resolve);
         }
-
       } else if (item.type === 'ad') {
         voiceAudio.src = DTMF.adStart ? await getBlobUrl(DTMF.adStart) : null;
         if (voiceAudio.src) await playAudio(voiceAudio.src);
@@ -315,7 +278,6 @@
         } else {
           await playAudio(await getBlobUrl(DTMF.adEndOdd));
         }
-
       } else if (item.type === 'jingle') {
         await playAudio(item.songSrc);
       } else if (item.type === 'hour-signal') {
@@ -327,9 +289,8 @@
       await playNext();
     }
 
-    document.getElementById('zipInput').addEventListener('change', async (event) => {
-      await audioContext.resume(); // на случай, если браузер требует взаимодействие
 
+    document.getElementById('zipInput').addEventListener('change', async (event) => {
       const file = event.target.files[0];
       if (!file) return;
 
@@ -339,6 +300,8 @@
       window.loadedZip = zip;
 
       const contentRaw = await zip.file("content.js").async("string");
+      // Используем новую глобальную переменную, чтобы избежать конфликта с pathToOriginalFileName в content.js
+      // Если content.js также объявляет pathToOriginalFileName, нужно убрать const/let там или переименовать
       const wrapperFn = new Function("global", contentRaw);
       wrapperFn(window);
 
@@ -348,6 +311,7 @@
       DTMF = window.DTMF || {};
       RANDOM = window.RANDOM || [];
 
+      // Загружаем часовые звуки в hourSounds (исправлено)
       for (let h = 0; h < 24; h++) {
         const key = `h/${h}.mp3`;
         if (window.loadedZip.file(key)) {
@@ -359,11 +323,14 @@
       initOriginalSongs();
       await addTracksToQueue(QUEUE_AHEAD);
 
+      // Сделал обработчик async, чтобы можно было await playNext()
       document.getElementById('skipButton').addEventListener('click', async () => {
-        musicAudioA.pause(); musicAudioA.currentTime = 0;
-        musicAudioB.pause(); musicAudioB.currentTime = 0;
-        voiceAudio.pause(); voiceAudio.currentTime = 0;
-        miscAudio.pause(); miscAudio.currentTime = 0;
+        musicAudio.pause();
+        musicAudio.currentTime = 0;
+        voiceAudio.pause();
+        voiceAudio.currentTime = 0;
+        miscAudio.pause();
+        miscAudio.currentTime = 0;
 
         await playNext();
       });
