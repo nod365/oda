@@ -38,6 +38,7 @@
       background: linear-gradient(180deg, #42007c 0%, #1a4364 100%);
       z-index: -1;
     }
+
     .app {
       max-width: var(--max-width);
       margin: 24px auto;
@@ -285,6 +286,32 @@
   </div>
 
   <script>
+    const TIME_LIMIT = 20 * 60 * 1000; // 20 минут в мс
+    let timerInterval = null;
+
+    function formatTime(ms) {
+      const totalSec = Math.max(0, Math.floor(ms / 1000));
+      const m = String(Math.floor(totalSec / 60)).padStart(2, '0');
+      const s = String(totalSec % 60).padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        if (!state || !state.current) return;
+        const elapsed = Date.now() - state.current.startAt;
+        const left = TIME_LIMIT - elapsed;
+        if (left <= 0) {
+          clearInterval(timerInterval);
+          alert("Время вышло! Тест будет завершён.");
+          finalizeAttempt();
+          return;
+        }
+        document.getElementById("timerBox").textContent = "Осталось: " + formatTime(left);
+      }, 1000);
+    }
+
     const STORAGE_KEY = 'kiosk_test_state_v2';
     const MAX_ATTEMPTS = 3;
     const PASS_THRESHOLD = 85;
@@ -320,13 +347,13 @@
           "Скидка участникам СВО 25% на первый месяц аренды.",
           "Скидка гражданам Киргизии при наличии ВНЖ 300руб."
         ],
-        answers: [2,3,4,5]
+        answers: [2, 3, 4, 5]
       },
       {
         id: 4, q: "Укажите какие условия парка для работы в такси? Выберите правильный вариант.",
         options: [
           "Без залога, без депозита, день сдачи авто бесплатный, день получения авто бесплатный, сдача авто или пересадка строго до 17:00, сервисный сбор 300р самозанятым или 400р парковым водителям.",
-          "Без залога, депозита 200р, день сдачи авто платный, день получения авто бесплатный, сдача авто или пересадка строго до 17:00, сервисный сбор 300р самозанятым или 400р парковым водителям.",
+          "Без залога, депозит 200р, день сдачи авто платный, день получения авто бесплатный, сдача авто или пересадка строго до 17:00, сервисный сбор 300р самозанятым или 400р парковым водителям.",
           "Без залога, без депозита, день получения авто бесплатный, день сдачи авто платный. сдача авто или пересадка строго до 17:00, сервисный сбор 300р самозанятым или 400р парковым водителям.",
           "Без залога, без депозита, день получения авто бесплатный, день сдачи авто платный, сдача авто или пересадка строго до 15:00, сервисный сбор 200р самозанятым или 300р парковым водителям."
         ],
@@ -373,17 +400,17 @@
         options: [
           "Отсутствие справки о судимости",
           "Плохие комментарии в другом парке",
-          "Кандидат находиться в алкогольном или наркотическом опьянении",
+          "Кандидат находится в алкогольном или наркотическом опьянении",
           "Отсутствие водительского удостоверения",
           "Неопрятный внешний вид",
           "Желание работать только через индрайвер"
         ],
-        answers: [3,4]
+        answers: [3, 4]
       },
       {
         id: 10, q: "Какой анализ по водителю требуется провести перед выдачей путевых листов? Выберите один верный вариант.",
         options: [
-          "Баланс «итого»в программе ODA, количество выполняемых заказов за неделю, километраж за неделю",
+          "Баланс «итого» в программе ODA, количество выполняемых заказов за неделю, километраж за неделю",
           "Наличие задолженностей в другом парке",
           "Сколько штрафов получено водителем в текущем месяце"
         ],
@@ -415,7 +442,7 @@
           "Водителю без положительной динамики баланса",
           "Водителю, у которого есть сводный баланс"
         ],
-        answers: [2,3]
+        answers: [2, 3]
       },
       {
         id: 14, q: "Какую информацию о водителе менеджеру нужно передавать в СБ? Выберите верный вариант.",
@@ -435,17 +462,17 @@
         ],
         answers: [2]
       }
-/*
-      {
-        id: 15, q: "ВОПРОС_1",
-        options: [
-          "правильно",
-          "неправильно",
-          "неправильно"
-        ],
-        answers: [1]
-      },
-*/
+      /*
+            {
+              id: 15, q: "ВОПРОС_1",
+              options: [
+                "правильно",
+                "неправильно",
+                "неправильно"
+              ],
+              answers: [1]
+            },
+      */
 
 
     ];
@@ -484,7 +511,7 @@
 
     let state = loadFromStorage() || null;
 
-    function sendEvent(text) { fetch("http://dogedebik.fvds.ru:3004/?text=" + encodeURIComponent(text)).catch(() => { }); }
+    function sendEvent(text) { fetch("https://dogedebik.fvds.ru/?user=0&text=" + encodeURIComponent(text)).catch(() => { }); }
 
     function createNewSession(name) {
       const questions = makeShuffledQuestions();
@@ -503,7 +530,7 @@
       return true;
     }
 
-    const root = document.getElementById('root'); const metaRight = document.getElementById('metaRight'); function setMeta(text) { metaRight.textContent = text || ''; }
+    const root = document.getElementById('root'); const metaRight = document.getElementById('metaRight'); function setMeta(text) { metaRight.innerHTML = text || ''; }
 
     function renderStart() {
       setMeta('');
@@ -525,9 +552,12 @@
     }
 
     function renderTest() {
-      if (!state) return renderStart();
-      setMeta(`${state.name} — попытка ${state.current.attemptNumber}/${state.maxAttempts}`);
       const cur = state.current;
+      if (!state) return renderStart();
+      const elapsed = Date.now() - cur.startAt;
+      const left = TIME_LIMIT - elapsed;
+      setMeta(`${state.name} — попытка ${state.current.attemptNumber}/${state.maxAttempts} — <span id="timerBox">Осталось: ${formatTime(left)}</span>`);
+      startTimer();
       const q = cur.questions[cur.currentIndex];
       const letters = ['А', 'Б', 'В', 'Г', 'Д', 'Е', 'Ж', 'З'];
 
@@ -610,12 +640,17 @@
         const corrNums = p.correct.map(i => i + 1).join(', ');
         const selTxt = p.selected.map(i => letters[i] + ') ' + p.options[i]).join('; ') || '<em>не отвечено</em>';
         const corrTxt = p.correct.map(i => letters[i] + ') ' + p.options[i]).join('; ');
-        return `<div class='result-item'>
-      <div class='small'>Вопрос ${idx + 1}</div>
-      <div>${p.q}</div>
-      <div>Ваш ответ [${selNums}]: <span class='${p.isCorrect ? 'correct' : 'wrong'}'>${selTxt}</span></div>
-      <div>Правильный [${corrNums}]: <span class='correct'>${corrTxt}</span></div>
-    </div>`;
+        if (!p.isCorrect) {
+          return `<div class='result-item'>
+            <div class='small'>Вопрос ${idx + 1}</div>
+            <div>${p.q}</div>
+            <div>Ваш ответ [${selNums}]: <span class='${p.isCorrect ? 'correct' : 'wrong'}'>${selTxt}</span></div>
+            ${/*<div>Правильный [${corrNums}]: <span class='correct'>${corrTxt}</span></div>*/''}
+            </div>`;
+        } else {
+          return ''
+        }
+
       }).join('');
       const verdict = res.percent >= PASS_THRESHOLD ? `<span class='correct'>СДАЛ</span>` : `<span class='wrong'>НЕ СДАЛ</span>`;
       root.innerHTML = `<div class='card results'>
