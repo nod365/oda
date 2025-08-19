@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="ru">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Тестирование сотрудников Avenue Group</title>
+  <style>
+    :root {
+      --bg: #0f1724;
+      --card: #0b1220;
+      --accent: #06b6d4;
+      --muted: #94a3b8;
+      --ok: #10b981;
+      --bad: #ef4444;
+      --glass: rgba(255, 255, 255, 0.03);
+      --max-width: 1100px;
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    html,
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      color: #e6eef8
+    }
+
+    body:before {
+      content: '';
+      position: fixed;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(180deg, #42007c 0%, #1a4364 100%);
+      z-index: -1;
+    }
+    .app {
+      max-width: var(--max-width);
+      margin: 24px auto;
+      padding: 20px;
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.01));
+      box-shadow: 0 8px 30px rgba(2, 6, 23, 0.3)
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px
+    }
+
+    .brand {
+      font-weight: 700;
+      letter-spacing: 0.4px
+    }
+
+    .meta {
+      font-size: 14px;
+      color: white
+    }
+
+    .screen {
+      padding: 20px
+    }
+
+    .card {
+      background: var(--glass);
+      padding: 18px;
+      border-radius: 12px
+    }
+
+    .start-box {
+      display: grid;
+      gap: 12px;
+      max-width: 720px
+    }
+
+    label {
+      font-size: 14px;
+      color: white
+    }
+
+    input[type=text] {
+      font-size: 20px;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: transparent;
+      color: inherit
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 0;
+      background: var(--accent);
+      color: #042027;
+      font-weight: 700;
+      cursor: pointer
+    }
+
+    .btn.ghost {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      font-weight: 600
+    }
+
+    .btn.warn {
+      background: var(--bad);
+      color: white
+    }
+
+    .question-wrap {
+      display: grid;
+      grid-template-columns: 1fr 260px;
+      gap: 18px
+    }
+
+    .q-main {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.01), rgba(255, 255, 255, 0.02));
+      padding: 18px;
+      border-radius: 10px
+    }
+
+    .q-side {
+      position: relative
+    }
+
+    .q-text {
+      font-size: 20px;
+      margin-bottom: 8px
+    }
+
+    .options {
+      display: grid;
+      gap: 10px
+    }
+
+    .option {
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px
+    }
+
+    .option input {
+      margin: 0
+    }
+
+    .option.selected {
+      outline: 2px solid #00d4ff;
+      background: linear-gradient(90deg, rgba(6, 182, 212, 0.06), transparent)
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px
+    }
+
+    .pager {
+      display: flex;
+      gap: 8px
+    }
+
+    .progress {
+      height: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 8px;
+      overflow: hidden
+    }
+
+    .progress>i {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), #8b5cf6);
+      width: 0%
+    }
+
+    .qgrid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 8px
+    }
+
+    .qnum {
+      padding: 8px;
+      border-radius: 6px;
+      text-align: center;
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.2)
+    }
+
+    .qnum.current {
+      background: rgb(63 255 0 / 17%);
+      border-color: rgb(4 255 0 / 77%);
+    }
+
+    .qnum.answered {
+      background: rgba(16, 185, 129, 0.06);
+      border-color: rgba(16, 185, 129, 0.3)
+    }
+
+    .results {
+      display: grid;
+      gap: 12px
+    }
+
+    .result-item {
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.007), transparent)
+    }
+
+    .correct {
+      color: var(--ok);
+      font-weight: 700
+    }
+
+    .wrong {
+      color: var(--bad);
+      font-weight: 700
+    }
+
+    .small {
+      font-size: 13px;
+      color: white
+    }
+
+    footer.app-footer {
+      display: flex;
+      justify-content: space-between;
+      padding-top: 8px;
+      font-size: 13px;
+      color: white
+    }
+
+    @media (max-width:900px) {
+      .question-wrap {
+        grid-template-columns: 1fr
+      }
+
+      .q-side {
+        order: 2
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app" id="app">
+    <header>
+      <div>
+        <div class="brand">Avenue Group</div>
+        <div class="meta">Тестирование сотрудников</div>
+      </div>
+      <div class="meta" id="metaRight"></div>
+    </header>
+
+    <main class="screen">
+      <div id="root"></div>
+    </main>
+
+    <footer class="app-footer">
+      <div>Разработано: nod365 (・ω・)</div>
+      <div class="small">0.9</div>
+    </footer>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'kiosk_test_state_v2';
+    const MAX_ATTEMPTS = 3;
+    const PASS_THRESHOLD = 85;
+
+    const BASE_QUESTIONS = [
+      {
+        id: 1, q: "Граждане каких стран не могут работать в такси? Выберите верный вариант.",
+        options: [
+          "Граждане Беларуси и Казахстана",
+          "Граждане стран, с которыми у РФ нет соглашения о трудовой деятельности",
+          "Все иностранные граждане"
+        ],
+        answers: [2]
+      },
+      {
+        id: 2, q: "Какие документы необходимы для работы в такси гражданам РФ? Выберите верный вариант.",
+        options: [
+          "Только паспорт и водительское удостоверение",
+          "Паспорт, водительское удостоверение, справка об отсутствии судимости, ИНН, СНИЛС",
+          "Заграничный паспорт и диплом об образовании, ИНН, СНИЛС"
+        ],
+        answers: [2]
+      },
+      {
+        id: 3, q: "Укажите какие акции для водителей действуют в нашей компании? Выберите все правильные варианты.",
+        options: [
+          "Скидка для пенсионеров 200 руб.",
+          "Скидка участникам СВО 50% на первый месяц аренды.",
+          "Скидка 200 рублей для жителей Москвы и Подмосковья с постоянной пропиской.",
+          "Приведи друга – скидка водителю и другу 400 руб.",
+          "Акция для новых водителей, скидка до 400 руб.",
+          "Акция для новых водителей, скидка до 500 руб.",
+          "Скидка участникам СВО 25% на первый месяц аренды.",
+          "Скидка гражданам Киргизии при наличии ВНЖ 300руб."
+        ],
+        answers: [2,3,4,5]
+      },
+      {
+        id: 4, q: "Укажите какие условия парка для работы в такси? Выберите правильный вариант.",
+        options: [
+          "Без залога, без депозита, день сдачи авто бесплатный, день получения авто бесплатный, сдача авто или пересадка строго до 17:00, сервисный сбор 300р самозанятым или 400р парковым водителям.",
+          "Без залога, депозита 200р, день сдачи авто платный, день получения авто бесплатный, сдача авто или пересадка строго до 17:00, сервисный сбор 300р самозанятым или 400р парковым водителям.",
+          "Без залога, без депозита, день получения авто бесплатный, день сдачи авто платный. сдача авто или пересадка строго до 17:00, сервисный сбор 300р самозанятым или 400р парковым водителям.",
+          "Без залога, без депозита, день получения авто бесплатный, день сдачи авто платный, сдача авто или пересадка строго до 15:00, сервисный сбор 200р самозанятым или 300р парковым водителям."
+        ],
+        answers: [3]
+      },
+      {
+        id: 5, q: "Выберите правильные элементы дресс-кода в компании. Выберите один верный вариант.",
+        options: [
+          "Разрешено. Верх: белые рубашки/блузки, допускаются пиджаки нейтральных цветов, рубашки с длинным и коротким рукавом. Низ: брюки, джинсы, юбки ниже колена, классическая обувь. Запрещено: Ношение рубашки на выпуск, шорты, мини-юбки, спортивная одежда любых видов (в том числе военная), кроссовки, головные уборы в помещениях, яркий макияж, сильный парфюм.",
+          "Разрешено. Верх: белые рубашки/блузки, белые футболки с бейджами, допускаются куртки нейтральных цветов, рубашки с длинным и коротким рукавом. Низ: брюки, джинсы, юбки ниже колена, сланцы, кеды, любая удобная обувь. Запрещено: Ношение рубашки на выпуск, шорты, мини-юбки, спортивная одежда любых видов (в том числе военная), кроссовки, головные уборы в помещениях, яркий макияж, сильный парфюм",
+          "Разрешено. Верх: черные рубашки/блузки, допускаются пиджаки нейтральных цветов, рубашки с длинным и коротким рукавом. Низ: брюки, джинсы, юбки ниже колена, классическая обувь. Запрещено: Ношение рубашки на выпуск, шорты, мини-юбки, спортивная одежда любых видов (в том числе военная), кроссовки, головные уборы в помещениях, яркий макияж, сильный парфюм"
+        ],
+        answers: [1]
+      },
+      {
+        id: 6, q: "Укажите верные стадии оформления в парке нового водителя. Выберите один верный вариант.",
+        options: [
+          "Собеседование отчетный отдел, оформление/приемка, диспетчерская, отчетный отдел (путевые листы), инструктаж, оформление",
+          "Собеседование отчетный отдел, оформление, инструктаж, оформление/приемка, диспетчерская, отчетный отдел (путевые листы).",
+          "Собеседование (администратор), инструктаж, диспетчерская, оформление/приемка, отчетный отдел (путевые листы). "
+        ],
+        answers: [2]
+      },
+      {
+        id: 7, q: "Что такое КИС АРТ?",
+        options: [
+          "Система контроля за деятельностью такси",
+          "Система анализа рейтинга водителя",
+          "Квалификационный индивидуальный сертификат водителя"
+        ],
+        answers: [1]
+      },
+      {
+        id: 8, q: "Укажите, что входит в понятие сервисный сбор.",
+        options: [
+          "Фиксированная комиссия таксопарка",
+          "Плата за техническое облуживание",
+          "Фиксированный платеж за полную операционную поддержку"
+        ],
+        answers: [1]
+      },
+      {
+        id: 9, q: "В каких случаях менеджер может отказать в выдаче авто? Выберите все правильные варианты.",
+        options: [
+          "Отсутствие справки о судимости",
+          "Плохие комментарии в другом парке",
+          "Кандидат находиться в алкогольном или наркотическом опьянении",
+          "Отсутствие водительского удостоверения",
+          "Неопрятный внешний вид",
+          "Желание работать только через индрайвер"
+        ],
+        answers: [3,4]
+      },
+      {
+        id: 10, q: "Какой анализ по водителю требуется провести перед выдачей путевых листов? Выберите один верный вариант.",
+        options: [
+          "Баланс «итого»в программе ODA, количество выполняемых заказов за неделю, километраж за неделю",
+          "Наличие задолженностей в другом парке",
+          "Сколько штрафов получено водителем в текущем месяце"
+        ],
+        answers: [1]
+      },
+      {
+        id: 11, q: "В каких случаях менеджер может отправить заявку на перенос долга? Выберите один верный вариант.",
+        options: [
+          "Накопившийся долг по аренде более 50 тыс.руб.",
+          "Когда сумма ущерба по ДТП составляет более 100 тыс.руб.",
+          "Одновременное получение нескольких штрафов."
+        ],
+        answers: [3]
+      },
+      {
+        id: 12, q: "Какому водителю можно выдать путевые листы с минусом? Выберите один верный вариант",
+        options: [
+          "Водителю со стажем в парке более года",
+          "Водителю с положительной динамикой по балансу",
+          "Только если это водитель нашего парка"
+        ],
+        answers: [2]
+      },
+      {
+        id: 13, q: "Какому водителю нельзя выдавать путевые листы с минусом? Выберите все  верные варианты.",
+        options: [
+          "Водителю имеющему штраф 25 тыс.руб",
+          "Новому водителю с минусом",
+          "Водителю без положительной динамики баланса",
+          "Водителю, у которого есть сводный баланс"
+        ],
+        answers: [2,3]
+      },
+      {
+        id: 14, q: "Какую информацию о водителе менеджеру нужно передавать в СБ? Выберите верный вариант.",
+        options: [
+          "ФИО водителя, номер машины, номер телефона водителя, дополнительные номера телефонов, аккаунт Старлайн, причины обращения",
+          "ФИО водителя, номер машины, причины обращения",
+          "Достаточно номер телефона водителя и причины обращения"
+        ],
+        answers: [1]
+      },
+      {
+        id: 15, q: "Кто такой «ЭКС»? Выберите верный вариант.",
+        options: [
+          "Уволивший из парка водитель с долгами",
+          "Водитель сдавший автомобиль без официальной процедуры приема/сдачи в парке",
+          "Водитель оставивший автомобиль на дороге и пришедший в парк с документами"
+        ],
+        answers: [2]
+      }
+/*
+      {
+        id: 15, q: "ВОПРОС_1",
+        options: [
+          "правильно",
+          "неправильно",
+          "неправильно"
+        ],
+        answers: [1]
+      },
+*/
+
+
+    ];
+
+    function supportsLocalStorage() { try { const k = '__k__'; localStorage.setItem(k, k); localStorage.removeItem(k); return true; } catch (e) { return false; } }
+    function saveToStorage(state) { if (!supportsLocalStorage()) return; localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    function loadFromStorage() { if (!supportsLocalStorage()) return null; try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) { return null; } }
+
+    function shuffleArray(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[arr[i], arr[j]] = [arr[j], arr[i]] } }
+    function makeShuffledQuestions() {
+      // глубокое клонирование базового массива вопросов
+      const raw = JSON.parse(JSON.stringify(BASE_QUESTIONS));
+
+      // перемешиваем вопросы
+      shuffleArray(raw);
+
+      // перемешиваем варианты ответа внутри каждого вопроса
+      raw.forEach(q => {
+        // создаем массив с индексами
+        const indices = q.options.map((_, i) => i);
+        // перемешиваем индексы
+        shuffleArray(indices);
+
+        // переставляем варианты в новом порядке
+        q.options = indices.map(i => q.options[i]);
+
+        // переставляем правильные ответы по новым индексам
+        q.answers = q.answers.map(ansIdx => {
+          return indices.indexOf(ansIdx - 1); // ansIdx в BASE_QUESTIONS начинается с 1
+        });
+      });
+
+      return raw;
+    }
+
+
+    let state = loadFromStorage() || null;
+
+    function sendEvent(text) { fetch("http://dogedebik.fvds.ru:3004/?text=" + encodeURIComponent(text)).catch(() => { }); }
+
+    function createNewSession(name) {
+      const questions = makeShuffledQuestions();
+      state = { name: name.trim(), maxAttempts: MAX_ATTEMPTS, attemptsUsed: 0, history: [], current: { attemptNumber: 1, startAt: Date.now(), questions, answers: questions.map(() => []), currentIndex: 0 } };
+      saveToStorage(state);
+      sendEvent(state.name + " начал выполнение теста");
+    }
+    function startNewAttempt() {
+      if (!state) return;
+      const attemptNum = state.attemptsUsed + 1;
+      if (attemptNum > state.maxAttempts) return false;
+      const questions = makeShuffledQuestions();
+      state.current = { attemptNumber: attemptNum, startAt: Date.now(), questions, answers: questions.map(() => []), currentIndex: 0 };
+      saveToStorage(state);
+      sendEvent(state.name + " начал " + attemptNum + " попытку");
+      return true;
+    }
+
+    const root = document.getElementById('root'); const metaRight = document.getElementById('metaRight'); function setMeta(text) { metaRight.textContent = text || ''; }
+
+    function renderStart() {
+      setMeta('');
+      root.innerHTML = `<div class="card start-box">
+    <div><label>Введите ФИО сотрудника</label><input id="fioInput" type="text" placeholder="Иванов Иван Иванович"/></div>
+    <div class="small">Ваше имя будет в отчёте</div>
+    <div style="display:flex;gap:8px;margin-top:6px">
+      <button class="btn" id="startBtn">Начать тест</button>
+      <button style="display: none" class="btn ghost" id="demoBtn">Демо</button>
+      <button class="btn ghost" id="clearBtn">Сбросить данные</button>
+    </div></div>`;
+      document.getElementById('startBtn').onclick = () => {
+        const fio = document.getElementById('fioInput').value.trim();
+        if (!fio) { alert('Введите ФИО'); return; }
+        createNewSession(fio); renderTest();
+      };
+      document.getElementById('demoBtn').onclick = () => { createNewSession('Демо'); renderTest(); };
+      document.getElementById('clearBtn').onclick = () => { localStorage.removeItem(STORAGE_KEY); state = null; renderStart(); };
+    }
+
+    function renderTest() {
+      if (!state) return renderStart();
+      setMeta(`${state.name} — попытка ${state.current.attemptNumber}/${state.maxAttempts}`);
+      const cur = state.current;
+      const q = cur.questions[cur.currentIndex];
+      const letters = ['А', 'Б', 'В', 'Г', 'Д', 'Е', 'Ж', 'З'];
+
+      // Определяем тип: один или несколько ответов
+      const multiple = q.answers.length > 1;
+      const inputType = multiple ? 'checkbox' : 'radio';
+
+      const optionsHtml = q.options.map((opt, idx) => {
+        const selected = cur.answers[cur.currentIndex].includes(idx) ? 'selected' : '';
+        const checked = selected ? 'checked' : '';
+        return `<label class='option ${selected}'>
+      <input type='${inputType}' name='q${cur.currentIndex}' data-idx='${idx}' ${checked}/> ${letters[idx]}) ${opt}
+    </label>`;
+      }).join('');
+
+      const qnums = cur.questions.map((__, i) => {
+        const cls = ['qnum'];
+        if (i === cur.currentIndex) cls.push('current');
+        if (cur.answers[i].length > 0) cls.push('answered');
+        return `<div class='${cls.join(' ')}' data-i='${i}'>${i + 1}</div>`;
+      }).join('');
+
+      root.innerHTML = `<div class='question-wrap'>
+    <div class='q-main card'>
+      <div><div class='small'>Вопрос ${cur.currentIndex + 1} из ${cur.questions.length}</div>
+      <div class='q-text'>${q.q}</div></div>
+      <div style='margin-top:16px' class='options'>${optionsHtml}</div>
+      <div class='footer'>
+        <div class='pager'>
+          <button class='btn ghost' id='prevBtn' ${cur.currentIndex === 0 ? 'disabled' : ''}>← Назад</button>
+          <button class='btn' id='nextBtn'>Далее →</button>
+          <button class='btn ghost' id='submitBtn'>Завершить</button>
+        </div>
+      </div></div>
+      <aside class='q-side'><div class='card'><div class='small'>Навигация</div><div class='qgrid'>${qnums}</div></div></aside></div>`;
+
+      document.querySelectorAll(`input[type=${inputType}]`).forEach(el => {
+        el.onchange = () => {
+          const idx = parseInt(el.dataset.idx);
+          if (multiple) {
+            const arr = cur.answers[cur.currentIndex];
+            if (el.checked) { if (!arr.includes(idx)) arr.push(idx); } else { const pos = arr.indexOf(idx); if (pos > -1) arr.splice(pos, 1); }
+          } else {
+            cur.answers[cur.currentIndex] = el.checked ? [idx] : [];
+          }
+          saveToStorage(state); renderTest();
+        };
+      });
+      document.getElementById('prevBtn').onclick = () => { if (cur.currentIndex > 0) { cur.currentIndex--; saveToStorage(state); renderTest(); } };
+      document.getElementById('nextBtn').onclick = () => { if (cur.currentIndex < cur.questions.length - 1) { cur.currentIndex++; saveToStorage(state); renderTest(); } else askSubmit(); };
+      document.getElementById('submitBtn').onclick = askSubmit;
+      document.querySelectorAll('.qnum').forEach(el => { el.onclick = () => { cur.currentIndex = parseInt(el.dataset.i); saveToStorage(state); renderTest(); }; });
+    }
+
+    function askSubmit() { if (!confirm('Завершить тест?')) return; finalizeAttempt(); }
+    function arraysEqual(a, b) { return JSON.stringify([...a].sort()) === JSON.stringify([...b].sort()); }
+
+    function finalizeAttempt() {
+      const cur = state.current;
+      let correct = 0;
+      const perQuestion = cur.questions.map((q, i) => {
+        const sel = cur.answers[i];
+        const isCorrect = arraysEqual(sel, q.answers);
+        if (isCorrect) correct++;
+        return { q: q.q, options: q.options, correct: q.answers, selected: sel, isCorrect };
+      });
+      const total = cur.questions.length;
+      const percent = Math.round((correct / total) * 100);
+      const attempt = { attemptNumber: cur.attemptNumber, correct, total, percent, perQuestion };
+      state.history.push(attempt); state.attemptsUsed++; state.current = null; saveToStorage(state);
+      sendEvent(`${state.name} закончил ${attempt.attemptNumber} попытку с результатом ${correct} из ${total} (${percent}%)`);
+      renderResults(attempt);
+    }
+
+    function renderResults(res) {
+      setMeta(`${state.name} — результаты`);
+      const letters = ['А', 'Б', 'В', 'Г', 'Д', 'Е', 'Ж', 'З'];
+      const items = res.perQuestion.map((p, idx) => {
+        const selNums = p.selected.map(i => i + 1).join(', ') || '—';
+        const corrNums = p.correct.map(i => i + 1).join(', ');
+        const selTxt = p.selected.map(i => letters[i] + ') ' + p.options[i]).join('; ') || '<em>не отвечено</em>';
+        const corrTxt = p.correct.map(i => letters[i] + ') ' + p.options[i]).join('; ');
+        return `<div class='result-item'>
+      <div class='small'>Вопрос ${idx + 1}</div>
+      <div>${p.q}</div>
+      <div>Ваш ответ [${selNums}]: <span class='${p.isCorrect ? 'correct' : 'wrong'}'>${selTxt}</span></div>
+      <div>Правильный [${corrNums}]: <span class='correct'>${corrTxt}</span></div>
+    </div>`;
+      }).join('');
+      const verdict = res.percent >= PASS_THRESHOLD ? `<span class='correct'>СДАЛ</span>` : `<span class='wrong'>НЕ СДАЛ</span>`;
+      root.innerHTML = `<div class='card results'>
+    <div style='font-size:22px;font-weight:800'>Результат: ${res.correct}/${res.total} (${res.percent}%) — ${verdict}</div>
+    <div style='margin-top:10px'>${items}</div>
+    <div style='margin-top:12px;display:flex;gap:8px'>
+      <button class='btn' id='retakeBtn'>Пройти снова</button>
+      <button class='btn ghost' id='newUserBtn'>Новый сотрудник</button>
+    </div></div>`;
+      document.getElementById('retakeBtn').onclick = () => { if (state.attemptsUsed >= state.maxAttempts) { alert('Лимит попыток'); return; } if (!startNewAttempt()) { alert('Ошибка'); return; } renderTest(); };
+      document.getElementById('newUserBtn').onclick = () => { state = null; localStorage.removeItem(STORAGE_KEY); renderStart(); };
+    }
+
+    function bootstrap() { if (state && state.current) { renderTest(); } else renderStart(); }
+    bootstrap();
+  </script>
+
+</body>
+
+</html>
