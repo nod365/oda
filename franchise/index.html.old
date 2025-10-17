@@ -1,0 +1,779 @@
+<!doctype html>
+<html lang="ru">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Франшиза Тестирование Avenue Group</title>
+  <style>
+    :root {
+      --bg: #0f1724;
+      --card: #0b1220;
+      --accent: #06b6d4;
+      --muted: #94a3b8;
+      --ok: #10b981;
+      --bad: #ef4444;
+      --glass: rgba(255, 255, 255, 0.03);
+      --max-width: 1100px;
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    html,
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      color: #e6eef8
+    }
+
+body:before {
+    content: '';
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 100%;
+    background: #000 url(./crash.jpg);
+    background-size: cover;
+    background-position: center;
+    z-index: -1;
+}
+
+.app {
+    max-width: var(--max-width);
+    margin: 24px auto;
+    padding: 20px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgb(0 0 0 / 20%), rgb(0 0 0 / 0%));
+    box-shadow: 0 8px 30px rgba(2, 6, 23, 0.3);
+    backdrop-filter: blur(25px);
+}
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px
+    }
+
+    .brand {
+      font-weight: 700;
+      letter-spacing: 0.4px
+    }
+
+    .meta {
+      font-size: 14px;
+      color: white
+    }
+
+    .screen {
+      padding: 20px
+    }
+
+    .card {
+      background: var(--glass);
+      padding: 18px;
+      border-radius: 12px
+    }
+
+    .start-box {
+      display: grid;
+      gap: 12px;
+      max-width: 720px
+    }
+
+    label {
+      font-size: 14px;
+      color: white
+    }
+
+    input[type=text] {
+      font-size: 20px;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: transparent;
+      color: inherit
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 0;
+      background: var(--accent);
+      color: #042027;
+      font-weight: 700;
+      cursor: pointer
+    }
+
+    .btn.ghost {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      font-weight: 600
+    }
+
+    .btn.warn {
+      background: var(--bad);
+      color: white
+    }
+
+    .question-wrap {
+      display: grid;
+      grid-template-columns: 1fr 260px;
+      gap: 18px
+    }
+
+    .q-main {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.01), rgba(255, 255, 255, 0.02));
+      padding: 18px;
+      border-radius: 10px
+    }
+
+    .q-side {
+      position: relative
+    }
+
+    .q-text {
+      font-size: 20px;
+      margin-bottom: 8px
+    }
+
+    .options {
+      display: grid;
+      gap: 10px
+    }
+
+    .option {
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px
+    }
+
+    .option input {
+      margin: 0
+    }
+
+    .option.selected {
+      outline: 2px solid #00d4ff;
+      background: linear-gradient(90deg, rgba(6, 182, 212, 0.06), transparent)
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px
+    }
+
+    .pager {
+      display: flex;
+      gap: 8px
+    }
+
+    .progress {
+      height: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 8px;
+      overflow: hidden
+    }
+
+    .progress>i {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), #8b5cf6);
+      width: 0%
+    }
+
+    .qgrid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 8px
+    }
+
+    .qnum {
+      padding: 8px;
+      border-radius: 6px;
+      text-align: center;
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.2)
+    }
+
+    .qnum.current {
+      background: rgb(63 255 0 / 17%);
+      border-color: rgb(4 255 0 / 77%);
+    }
+
+    .qnum.answered {
+      background: rgba(16, 185, 129, 0.06);
+      border-color: rgba(16, 185, 129, 0.3)
+    }
+
+    .results {
+      display: grid;
+      gap: 12px
+    }
+
+    .result-item {
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.007), transparent)
+    }
+
+    .correct {
+      color: var(--ok);
+      font-weight: 700
+    }
+
+    .wrong {
+      color: var(--bad);
+      font-weight: 700
+    }
+
+    .small {
+      font-size: 13px;
+      color: white
+    }
+
+    footer.app-footer {
+      display: flex;
+      justify-content: space-between;
+      padding-top: 8px;
+      font-size: 13px;
+      color: white
+    }
+
+    @media (max-width:900px) {
+      .question-wrap {
+        grid-template-columns: 1fr
+      }
+
+      .q-side {
+        order: 2
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app" id="app">
+    <header>
+      <div>
+        <div class="brand">Avenue Group</div>
+        <div class="meta">Франшиза</div>
+      </div>
+      <div class="meta" id="metaRight"></div>
+    </header>
+
+    <main class="screen">
+      <div id="root"></div>
+    </main>
+
+    <footer class="app-footer">
+      <div>Разработано: nod365 (・ω・)</div>
+      <div class="small">v.4</div>
+    </footer>
+  </div>
+
+  <script>
+    const TIME_LIMIT = 20 * 60 * 1000; // 20 минут в мс
+    let timerInterval = null;
+
+    function formatTime(ms) {
+      const totalSec = Math.max(0, Math.floor(ms / 1000));
+      const m = String(Math.floor(totalSec / 60)).padStart(2, '0');
+      const s = String(totalSec % 60).padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        if (!state || !state.current) return;
+        const elapsed = Date.now() - state.current.startAt;
+        const left = TIME_LIMIT - elapsed;
+        if (left <= 0) {
+          clearInterval(timerInterval);
+          alert("Время вышло! Тест будет завершён.");
+          finalizeAttempt();
+          return;
+        }
+        document.getElementById("timerBox").textContent = "Осталось: " + formatTime(left);
+      }, 1000);
+    }
+
+    const STORAGE_KEY = 'kiosk_test_state_v2';
+    const MAX_ATTEMPTS = 3;
+    const PASS_THRESHOLD = 85;
+
+    const BASE_QUESTIONS = [
+      {
+        id: 1, q: "Что такое франшиза?",
+        options: [
+          "Дополнительный налог",
+          "Штраф за нарушение ПДД",
+          "Система финансовой защиты при ДТП",
+          "Бонус за безаварийную езду"
+        ],
+        answers: [3]
+      },
+      {
+        id: 2, q: "Сколько рублей в день списывается за франшизу?",
+        options: [
+          "100 ₽",
+          "200 ₽",
+          "300 ₽",
+          "500 ₽"
+        ],
+        answers: [2]
+      },
+      {
+        id: 3, q: "Франшиза начинает действовать при ущербе от:",
+        options: [
+          "10 000 ₽",
+          "25 000 ₽",
+          "50 000 ₽",
+          "100 000 ₽"
+        ],
+        answers: [2]
+      },
+      {
+        id: 4, q: "Какой максимальный платеж водителя за одно ДТП?",
+        options: [
+          "10 000 ₽",
+          "25 000 ₽",
+          "50 000 ₽",
+          "Нет ограничений"
+        ],
+        answers: [2]
+      },
+      {
+        id: 5, q: "Если ущерб в ДТП — 20 000 ₽?",
+        options: [
+          "Водитель оплатит 20 000 ₽",
+          "Франшиза покроет 15 000 ₽",
+          "Водитель ничего не платит",
+          "Ущерб переносится на следующий месяц"
+        ],
+        answers: [1]
+      },
+      {
+        id: 6, q: "Если водитель попал в два ДТП за день (100 000 ₽ и 50 000 ₽), сколько он заплатит?",
+        options: [
+          "25 000 ₽ за оба",
+          "50 000 ₽",
+          "75 000 ₽",
+          "150 000 ₽"
+        ],
+        answers: [2]
+      },
+      {
+        id: 7, q: "Как учитываются несколько ДТП по франшизе?",
+        options: [
+          "Суммируются в общий ущерб",
+          "Каждое ДТП — отдельный случай",
+          "Учитывается только первое ДТП",
+          "Зависит от времени между авариями"
+        ],
+        answers: [2]
+      },
+      {
+        id: 8, q: "Если ущерб в ДТП — 25 000 ₽?",
+        options: [
+          "Водитель платит 25 000 ₽",
+          "Франшиза не применяется (ровно 25 000 ₽)",
+          "Водитель платит 12 500 ₽",
+          "Ущерб покрывается полностью"
+        ],
+        answers: [1]
+      },
+      {
+        id: 9, q: "Если водитель попал в три ДТП за месяц (50 000 ₽, 30 000 ₽, 100 000 ₽), какова его общая выплата?",
+        options: [
+          "25 000 ₽",
+          "50 000 ₽",
+          "75 000 ₽",
+          "180 000 ₽"
+        ],
+        answers: [3]
+      },
+      {
+        id: 10, q: "Можно ли отказаться от франшизы?",
+        options: [
+          "Да, написав заявление",
+          "Да, но с повышением других платежей",
+          "Только для водителей со стажем >5 лет",
+          "Нет, это обязательный платеж"
+        ],
+        answers: [4]
+      },
+      {
+        id: 11, q: "Если ущерб в ДТП — 200 000 ₽, сколько заплатит водитель?",
+        options: [
+          "25 000 ₽",
+          "50 000 ₽",
+          "100 000 ₽",
+          "200 000 ₽"
+        ],
+        answers: [1]
+      },
+      {
+        id: 12, q: "Как франшиза влияет на отчетность водителя?",
+        options: [
+          "Увеличивает штрафы",
+          "Освобождает от ответственности",
+          "Минимизирует финансовые потери",
+          "Уменьшает страховые выплаты"
+        ],
+        answers: [3]
+      },
+      {
+        id: 13, q: "Главное преимущество франшизы для водителя:",
+        options: [
+          "Бесплатный ремонт",
+          "Отмена штрафов",
+          "Фиксированные затраты при ДТП",
+          "Скидки на топливо"
+        ],
+        answers: [3]
+      },
+      {
+        id: 15, q: "Почему франшизу можно сравнить с «подушкой безопасности»?",
+        options: [
+          "Она защищает от штрафов",
+          "Ограничивает максимальные расходы",
+          "Позволяет не платить за мелкие повреждения",
+          "Дает бонусы за аккуратную езду"
+        ],
+        answers: [2]
+      },
+      {
+        id: 16, q: "Какое утверждение о франшизе неверно?",
+        options: [
+          "Она обязательна для всех",
+          "Покрывает ущерб до 25 000 ₽",
+          "ДТП учитываются отдельно",
+          "Ежедневный платеж — 200 ₽"
+        ],
+        answers: [2]
+      },
+      {
+        id: 17, q: "Как лучше объяснить водителю пользу франшизы?",
+        options: [
+          "Это дополнительный налог",
+          "Это защита от больших расходов при аварии",
+          "Это штраф за рискованную езду",
+          "Это добровольный взнос"
+        ],
+        answers: [2]
+      },
+      {
+        id: 18, q: "Что произойдет, если водитель не попадет в ДТП за год?",
+        options: [
+          "Он получит возврат денег",
+          "Платежи не возвращаются",
+          "Сумма переносится на следующий год",
+          "Франшиза отменяется"
+        ],
+        answers: [2]
+      },
+      
+      
+      /*
+            {
+              id: 15, q: "ВОПРОС_1",
+              options: [
+                "правильно",
+                "неправильно",
+                "неправильно"
+              ],
+              answers: [1]
+            },
+      */
+
+
+    ];
+
+    function supportsLocalStorage() { try { const k = '__k__'; localStorage.setItem(k, k); localStorage.removeItem(k); return true; } catch (e) { return false; } }
+    function saveToStorage(state) { if (!supportsLocalStorage()) return; localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    function loadFromStorage() { if (!supportsLocalStorage()) return null; try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) { return null; } }
+
+    function shuffleArray(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[arr[i], arr[j]] = [arr[j], arr[i]] } }
+    function makeShuffledQuestions() {
+      // глубокое клонирование базового массива вопросов
+      const raw = JSON.parse(JSON.stringify(BASE_QUESTIONS));
+
+      // перемешиваем вопросы
+      shuffleArray(raw);
+
+      // перемешиваем варианты ответа внутри каждого вопроса
+      raw.forEach(q => {
+        // создаем массив с индексами
+        const indices = q.options.map((_, i) => i);
+        // перемешиваем индексы
+        shuffleArray(indices);
+
+        // переставляем варианты в новом порядке
+        q.options = indices.map(i => q.options[i]);
+
+        // переставляем правильные ответы по новым индексам
+        q.answers = q.answers.map(ansIdx => {
+          return indices.indexOf(ansIdx - 1); // ansIdx в BASE_QUESTIONS начинается с 1
+        });
+      });
+
+      return raw;
+    }
+
+
+    let state = loadFromStorage() || null;
+
+    function sendEvent(text) { fetch("https://dogedebik.fvds.ru/?user=0&text=" + encodeURIComponent(text)).catch(() => { }); }
+
+    function createNewSession(name, pos, park) {
+      const questions = makeShuffledQuestions();
+      state = {
+        name: name.trim(),
+        pos: pos.trim(),
+        park: park.trim(),
+        maxAttempts: MAX_ATTEMPTS,
+        attemptsUsed: 0,
+        history: [],
+        current: { attemptNumber: 1, startAt: Date.now(), questions, answers: questions.map(() => []), currentIndex: 0 }
+      };
+      saveToStorage(state);
+      sendEvent(`${state.name}, должность: ${state.pos}, парк: ${state.park} — начал выполнение теста франшизы`);
+    }
+
+    function startNewAttempt() {
+      if (!state) return;
+      const attemptNum = state.attemptsUsed + 1;
+      if (attemptNum > state.maxAttempts) return false;
+      const questions = makeShuffledQuestions();
+      state.current = { attemptNumber: attemptNum, startAt: Date.now(), questions, answers: questions.map(() => []), currentIndex: 0 };
+      saveToStorage(state);
+      sendEvent(state.name + " начал " + attemptNum + " попытку");
+      return true;
+    }
+
+    const root = document.getElementById('root'); const metaRight = document.getElementById('metaRight'); function setMeta(text) { metaRight.innerHTML = text || ''; }
+
+    function renderStart() {
+      setMeta('');
+      root.innerHTML = `<div class="card start-box">
+    <div><label>Введите ФИО сотрудника</label><input id="fioInput" type="text" placeholder="Иванов Иван Иванович"/></div>
+    <div><label>Введите должность</label><input id="posInput" type="text" placeholder="Менеджер"/></div>
+    <div><label>Введите парк</label><input id="parkInput" type="text" placeholder="Avenue Park"/></div>
+    <div class="small">Ваши данные будут в отчёте</div>
+    <div style="display:flex;gap:8px;margin-top:6px">
+      <button class="btn" id="startBtn">Начать тест</button>
+      <button style="display: none" class="btn ghost" id="demoBtn">Демо</button>
+      <button class="btn ghost" id="clearBtn">Сбросить данные</button>
+    </div></div>`;
+
+      document.getElementById('startBtn').onclick = () => {
+        const fio = document.getElementById('fioInput').value.trim();
+        const pos = document.getElementById('posInput').value.trim();
+        const park = document.getElementById('parkInput').value.trim();
+        if (!fio || !pos || !park) { alert('Введите все поля: ФИО, должность и парк'); return; }
+        createNewSession(fio, pos, park);
+        renderTest();
+      };
+      document.getElementById('demoBtn').onclick = () => { createNewSession('Демо', '-', '-'); renderTest(); };
+      document.getElementById('clearBtn').onclick = () => { localStorage.removeItem(STORAGE_KEY); state = null; renderStart(); };
+    }
+
+
+    function renderTest() {
+      const cur = state.current;
+      if (!state) return renderStart();
+      const elapsed = Date.now() - cur.startAt;
+      const left = TIME_LIMIT - elapsed;
+      setMeta(`${state.name} — попытка ${state.current.attemptNumber}/${state.maxAttempts} — <span id="timerBox">Осталось: ${formatTime(left)}</span>`);
+      startTimer();
+      const q = cur.questions[cur.currentIndex];
+      const letters = ['А', 'Б', 'В', 'Г', 'Д', 'Е', 'Ж', 'З'];
+
+      // Определяем тип: один или несколько ответов
+      const multiple = q.answers.length > 1;
+      const inputType = multiple ? 'checkbox' : 'radio';
+
+      const optionsHtml = q.options.map((opt, idx) => {
+        const selected = cur.answers[cur.currentIndex].includes(idx) ? 'selected' : '';
+        const checked = selected ? 'checked' : '';
+        return `<label class='option ${selected}'>
+      <input type='${inputType}' name='q${cur.currentIndex}' data-idx='${idx}' ${checked}/> ${letters[idx]}) ${opt}
+    </label>`;
+      }).join('');
+
+      const qnums = cur.questions.map((__, i) => {
+        const cls = ['qnum'];
+        if (i === cur.currentIndex) cls.push('current');
+        if (cur.answers[i].length > 0) cls.push('answered');
+        return `<div class='${cls.join(' ')}' data-i='${i}'>${i + 1}</div>`;
+      }).join('');
+
+      root.innerHTML = `<div class='question-wrap'>
+    <div class='q-main card'>
+      <div><div class='small'>Вопрос ${cur.currentIndex + 1} из ${cur.questions.length}</div>
+      <div class='q-text'>${q.q}</div></div>
+      <div style='margin-top:16px' class='options'>${optionsHtml}</div>
+      <div class='footer'>
+        <div class='pager'>
+          <button class='btn ghost' id='prevBtn' ${cur.currentIndex === 0 ? 'disabled' : ''}>← Назад</button>
+          <button class='btn' id='nextBtn'>Далее →</button>
+          <button class='btn ghost' id='submitBtn'>Завершить</button>
+        </div>
+      </div></div>
+      <aside class='q-side'><div class='card'><div class='small'>Навигация</div><div class='qgrid'>${qnums}</div></div></aside></div>`;
+
+      document.querySelectorAll(`input[type=${inputType}]`).forEach(el => {
+        el.onchange = () => {
+          const idx = parseInt(el.dataset.idx);
+          if (multiple) {
+            const arr = cur.answers[cur.currentIndex];
+            if (el.checked) { if (!arr.includes(idx)) arr.push(idx); } else { const pos = arr.indexOf(idx); if (pos > -1) arr.splice(pos, 1); }
+          } else {
+            cur.answers[cur.currentIndex] = el.checked ? [idx] : [];
+          }
+          saveToStorage(state); renderTest();
+        };
+      });
+      document.getElementById('prevBtn').onclick = () => { if (cur.currentIndex > 0) { cur.currentIndex--; saveToStorage(state); renderTest(); } };
+      document.getElementById('nextBtn').onclick = () => { if (cur.currentIndex < cur.questions.length - 1) { cur.currentIndex++; saveToStorage(state); renderTest(); } else askSubmit(); };
+      document.getElementById('submitBtn').onclick = askSubmit;
+      document.querySelectorAll('.qnum').forEach(el => { el.onclick = () => { cur.currentIndex = parseInt(el.dataset.i); saveToStorage(state); renderTest(); }; });
+    }
+
+    function askSubmit() { if (!confirm('Завершить тест?')) return; finalizeAttempt(); }
+    function arraysEqual(a, b) { return JSON.stringify([...a].sort()) === JSON.stringify([...b].sort()); }
+
+    function makeReportHtml(wrongAnswers, attempt, state) {
+  let html = `
+  <html><head><meta charset="utf-8">
+  <title>Отчёт по тесту</title></head><body>
+  <h2>Отчёт: ${state.name}, попытка ${attempt.attemptNumber}</h2>
+  <p>Результат: ${attempt.correct}/${attempt.total} (${attempt.percent}%)</p>
+  <hr/><h3>Ошибки:</h3>`;
+
+  wrongAnswers.forEach((w, idx) => {
+    html += `<div>
+      <b>Вопрос ${idx + 1}:</b> ${w.q}<br/>
+      ❌ Ответ: ${w.selected}<br/>
+      ✅ Правильно: ${w.correct}<br/><br/>
+    </div>`;
+  });
+
+  html += `</body></html>`;
+  return html;
+}
+
+function uploadReport(html, user = 0) {
+  const blob = new Blob([html], { type: "text/html" });
+  const formData = new FormData();
+  formData.append("report", blob, "report.html");
+  formData.append("user", user);
+
+  fetch("https://dogedebik.fvds.ru/upload", {
+    method: "POST",
+    body: formData,
+  }).catch(() => {});
+}
+
+
+
+    function finalizeAttempt() {
+  const cur = state.current;
+  let correct = 0;
+  const wrongAnswers = [];
+
+  const perQuestion = cur.questions.map((q, i) => {
+    const sel = cur.answers[i];
+    const isCorrect = arraysEqual(sel, q.answers);
+    if (isCorrect) {
+      correct++;
+    } else {
+      // Сохраняем неверные ответы в массив
+      wrongAnswers.push({
+        q: q.q,
+        selected: sel.map(idx => q.options[idx]).join('; ') || '—',
+        correct: q.answers.map(idx => q.options[idx]).join('; ')
+      });
+    }
+    return { q: q.q, options: q.options, correct: q.answers, selected: sel, isCorrect };
+  });
+
+  const total = cur.questions.length;
+  const percent = Math.round((correct / total) * 100);
+  const attempt = { attemptNumber: cur.attemptNumber, correct, total, percent, perQuestion };
+
+  state.history.push(attempt);
+  state.attemptsUsed++;
+  state.current = null;
+  saveToStorage(state);
+
+  // Отправляем общий результат
+  sendEvent(`${state.name} закончил ${attempt.attemptNumber} попытку теста франшизы с результатом ${correct} из ${total} (${percent}%)`);
+
+  // Если есть неверные ответы — отправляем их отдельным сообщением
+  if (wrongAnswers.length > 0) {
+  const reportHtml = makeReportHtml(wrongAnswers, attempt, state);
+  uploadReport(reportHtml, 0); // 0 = в группу, 1 = пользователю
+}
+
+  renderResults(attempt);
+}
+
+
+    function renderResults(res) {
+      setMeta(`${state.name} — результаты`);
+      const letters = ['А', 'Б', 'В', 'Г', 'Д', 'Е', 'Ж', 'З'];
+      const items = res.perQuestion.map((p, idx) => {
+        const selNums = p.selected.map(i => i + 1).join(', ') || '—';
+        const corrNums = p.correct.map(i => i + 1).join(', ');
+        const selTxt = p.selected.map(i => letters[i] + ') ' + p.options[i]).join('; ') || '<em>не отвечено</em>';
+        const corrTxt = p.correct.map(i => letters[i] + ') ' + p.options[i]).join('; ');
+        if (!p.isCorrect) {
+          return `<div class='result-item'>
+            <div class='small'>Вопрос ${idx + 1}</div>
+            <div>${p.q}</div>
+            <div>Ваш ответ [${selNums}]: <span class='${p.isCorrect ? 'correct' : 'wrong'}'>${selTxt}</span></div>
+            ${/*<div>Правильный [${corrNums}]: <span class='correct'>${corrTxt}</span></div>*/''}
+            </div>`;
+        } else {
+          return ''
+        }
+
+      }).join('');
+      const verdict = res.percent >= PASS_THRESHOLD ? `<span class='correct'>СДАЛ</span>` : `<span class='wrong'>НЕ СДАЛ</span>`;
+      root.innerHTML = `<div class='card results'>
+    <div style='font-size:22px;font-weight:800'>Результат: ${res.correct}/${res.total} (${res.percent}%) — ${verdict}</div>
+    <div style='margin-top:10px'>${items}</div>
+    <div style='margin-top:12px;display:flex;gap:8px'>
+      <button class='btn' id='retakeBtn'>Пройти снова</button>
+      <button class='btn ghost' id='newUserBtn'>Новый сотрудник</button>
+    </div></div>`;
+      document.getElementById('retakeBtn').onclick = () => { if (state.attemptsUsed >= state.maxAttempts) { alert('Лимит попыток'); return; } if (!startNewAttempt()) { alert('Ошибка'); return; } renderTest(); };
+      document.getElementById('newUserBtn').onclick = () => { state = null; localStorage.removeItem(STORAGE_KEY); renderStart(); };
+    }
+
+    function bootstrap() { if (state && state.current) { renderTest(); } else renderStart(); }
+    bootstrap();
+  </script>
+
+</body>
+
+</html>
