@@ -1,10 +1,371 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="ru">
+
 <head>
-  <meta charset="UTF-8">
-  <title>Видеоуроки парковки</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Видеоуроки Такопарк</title>
+  <style>
+    :root {
+      --bg: #0f1724;
+      /* dark navy */
+      --card: #0b1220;
+      --accent: #06b6d4;
+      /* teal */
+      --muted: #94a3b8;
+      --glass: rgba(255, 255, 255, 0.04);
+    }
+
+    /* Mobile-first */
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: linear-gradient(180deg, var(--bg), #071023 120%);
+      color: #e6eef6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 24px 16px;
+      box-sizing: border-box;
+    }
+
+    .wrap {
+      width: 100%;
+      max-width: 820px;
+    }
+
+    header {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .logo {
+      width: 54px;
+      height: 54px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), #7c3aed);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: #042024;
+      box-shadow: 0 6px 18px rgba(3, 7, 18, 0.6);
+    }
+
+    h1 {
+      font-size: 18px;
+      margin: 0
+    }
+
+    p.lead {
+      color: var(--muted);
+      margin: 6px 0 0;
+      font-size: 14px
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+      border-radius: 14px;
+      padding: 14px;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 6px 18px rgba(2, 6, 23, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .meta {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: flex-start
+    }
+
+    .title {
+      font-weight: 600
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--muted)
+    }
+
+    .btn {
+      -webkit-tap-highlight-color: transparent;
+      background: linear-gradient(180deg, var(--accent), #3b82f6);
+      border: none;
+      color: #042024;
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-weight: 700;
+      min-width: 124px;
+      text-align: center;
+      font-size: 15px;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(3, 7, 18, 0.45);
+    }
+
+    .btn.secondary {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      color: var(--muted);
+      font-weight: 600
+    }
+
+    footer {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 13px
+    }
+
+    /* Video overlay / modal */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 60
+    }
+
+    .overlay.show {
+      display: flex
+    }
+
+    .backdrop {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, rgba(2, 6, 23, 0.9), rgba(3, 7, 18, 0.95));
+      backdrop-filter: blur(6px);
+    }
+
+    .dialog {
+      position: relative;
+      max-width: 420px;
+      width: 100%;
+      border-radius: 18px;
+      overflow: hidden;
+      z-index: 61;
+      box-shadow: 0 30px 80px rgba(2, 6, 23, 0.7);
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    /* container to make vertical videos look good on phones */
+    .video-wrap {
+      width: 100%;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--card);
+    }
+
+    video {
+      width: 100%;
+      height: auto;
+      max-height: 90vh;
+      /* чтобы не выходило за границы экрана */
+      object-fit: contain;
+    }
+
+    .controls-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.01), transparent)
+    }
+
+    .close {
+      background: transparent;
+      border: none;
+      color: #F00;
+      font-weight: 700;
+      padding: 8px 10px;
+      border-radius: 10px
+    }
+
+    /* Desktop tweaks */
+    @media(min-width:720px) {
+      body {
+        padding: 36px
+      }
+
+      .cards {
+        grid-template-columns: repeat(2, 1fr)
+      }
+
+      .dialog {
+        max-width: 540px
+      }
+
+      video {
+        height: 80vh
+      }
+    }
+
+    /* small helper text */
+    .hint {
+      font-size: 13px;
+      color: var(--muted)
+    }
+  </style>
 </head>
+
 <body>
-<h3>Тут будут видеоуроки по парковкам</h3>
+  <div class="wrap">
+    <header>
+      <div class="logo">VT</div>
+      <div>
+        <h1>Видеоуроки таксопарка</h1>
+        <p class="lead">Нажмите на кнопку, чтобы посмотреть вертикальное туториал‑видео.</p>
+      </div>
+    </header>
+
+    <main>
+      <div class="cards" id="list"></div>
+
+      <footer>
+        <div class="hint">2025</div>
+      </footer>
+    </main>
+  </div>
+
+  <!-- Overlay video player -->
+  <div class="overlay" id="overlay" aria-hidden="true">
+    <div class="backdrop" id="backdrop"></div>
+    <div class="dialog" role="dialog" aria-modal="true" aria-label="Видео плеер">
+      <div class="video-wrap">
+        <video id="player" playsinline webkit-playsinline controls controlsList="nodownload" preload="metadata">
+          <!-- src set by JS -->
+          Ваш браузер не поддерживает тег video.
+        </video>
+      </div>
+      <div class="controls-row">
+        <div class="meta-small">
+          <div id="videoTitle" style="font-weight:700"></div>
+          <div style="font-size:13px;color:var(--muted)" id="videoSub"></div>
+        </div>
+        <div>
+          <button class="close" id="btnClose" aria-label="Закрыть">Закрыть</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // JSON списка видео — можно расширять
+    const videos = [
+      { src: 'video/parking.mp4', title: 'Как припарковать', subtitle: 'Руководство по парковке' },
+      { src: 'video/change_parking.mp4', title: 'Изменить парковку', subtitle: 'Измененить завершенную парковку' }
+    ];
+
+    const list = document.getElementById('list');
+    const overlay = document.getElementById('overlay');
+    const backdrop = document.getElementById('backdrop');
+    const player = document.getElementById('player');
+    const btnClose = document.getElementById('btnClose');
+    const videoTitle = document.getElementById('videoTitle');
+    const videoSub = document.getElementById('videoSub');
+
+    function createCard(item, idx) {
+      const card = document.createElement('div'); card.className = 'card';
+      const meta = document.createElement('div'); meta.className = 'meta';
+      const title = document.createElement('div'); title.className = 'title'; title.textContent = item.title;
+      const sub = document.createElement('div'); sub.className = 'subtitle'; sub.textContent = item.subtitle;
+      meta.appendChild(title); meta.appendChild(sub);
+
+      const controls = document.createElement('div');
+      const btn = document.createElement('button'); btn.className = 'btn'; btn.textContent = 'Смотреть'; btn.setAttribute('data-idx', idx);
+      btn.addEventListener('click', () => openPlayer(idx));
+      controls.appendChild(btn);
+
+      card.appendChild(meta); card.appendChild(controls);
+      return card;
+    }
+
+    function renderList() {
+      videos.forEach((v, i) => {
+        list.appendChild(createCard(v, i));
+      });
+    }
+
+    function openPlayer(idx) {
+      const item = videos[idx];
+      if (!item) return;
+      // set source
+      // remove existing sources to ensure mobile browsers reload properly
+      while (player.firstChild) player.removeChild(player.firstChild);
+      const src = document.createElement('source');
+      src.src = item.src; src.type = 'video/mp4';
+      player.appendChild(src);
+      player.load();
+
+      videoTitle.textContent = item.title;
+      videoSub.textContent = item.subtitle;
+
+      overlay.classList.add('show');
+      overlay.setAttribute('aria-hidden', 'false');
+
+      // try to play after user gesture
+      const p = player.play();
+      if (p && p.catch) {
+        p.catch(() => {
+          // autoplay blocked — user can tap play
+        });
+      }
+
+      // lock focus
+      btnClose.focus();
+    }
+
+    function closePlayer() {
+      // pause and remove src to stop downloading / playback
+      try { player.pause(); } catch (e) { }
+      while (player.firstChild) player.removeChild(player.firstChild);
+      overlay.classList.remove('show');
+      overlay.setAttribute('aria-hidden', 'true');
+    }
+
+    // click outside
+    backdrop.addEventListener('click', closePlayer);
+    btnClose.addEventListener('click', closePlayer);
+
+    // keyboard: esc to close
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && overlay.classList.contains('show')) closePlayer();
+    });
+
+    // prevent touchmove behind overlay on mobile
+    overlay.addEventListener('touchmove', (e) => { e.stopPropagation(); }, { passive: false });
+
+    // initial render
+    renderList();
+
+    // helpful: if video ends, keep overlay open but show 'Смотреть снова'
+    player.addEventListener('ended', () => {
+      // show native controls state — nothing extra needed
+    });
+  </script>
 </body>
+
 </html>
