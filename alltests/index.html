@@ -459,7 +459,7 @@ const BASE_TESTS = {
                 "По всей России",
                 "Только по Москве"
               ],
-              answers: [3]
+              answers: [1]
             },
             {
               id: 6, q: "В каких случаях иностранные  граждане могут оформлять ИП?",
@@ -1323,7 +1323,7 @@ function finalizeAttempt(){
   state.history.push(attempt);state.attemptsUsed++;state.current=null;saveState(state);
   sendEvent(`${state.name} завершил тест "${state.testName}" с результатом ${correct}/${total} (${percent}%)\nПопытка ${attempt.attemptNumber}/${state.maxAttempts} \nПарк: ${state.park}\nОтдел: ${state.pos}`);
   if(wrong.length>0){
-    const html=`<html><body><h3>Отчёт: ${state.name}</h3><p>Тест: ${state.testName}</p><p>${correct}/${total} (${percent}%)</p><hr>${wrong.map((w,i)=>`<b>${i+1}.</b> ${w.q}<br/>Ответ: ${w.selected}<br/>Правильно: ${w.correct}<br/><br/>`).join('')}</body></html>`;
+    const html=`<html><head><meta charset="utf-8" /></head><body><h3>Отчёт: ${state.name}</h3><p>Тест: ${state.testName}</p><p>${correct}/${total} (${percent}%)</p><hr>${wrong.map((w,i)=>`<b>${i+1}.</b> ${w.q}<br/>Ответ: ${w.selected}<br/>Правильно: ${w.correct}<br/><br/>`).join('')}</body></html>`;
     uploadReport(html);
   }
   renderResults(attempt);
