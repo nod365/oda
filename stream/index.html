@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
-  <title>Виртуальный Радио Ведущий</title>
+  <title>Radio Player</title>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <style>
     body {
@@ -38,6 +38,127 @@
   <div id="queue"></div>
 
   <script>
+let song = "NOTHING IS PLAYING"; // глобальная переменная
+let lastSong = song;         // последняя версия песни
+let songPos = 0;             // позиция прокрутки песни
+const artistWidth = 15;      // ширина окна artist
+
+const stationText = "HYPERPOP PLAZA 104.0 FM - REKLAMA +74959250444";
+let stationPos = 0;          // позиция прокрутки title
+const titleWidth = 15;       // ширина окна title
+
+const step = 3;              // шаг прокрутки (как раньше)
+
+function startRadioMetadata() {
+
+    if (window.radioUpdater) {
+        clearInterval(window.radioUpdater);
+    }
+
+    function scrollText(source, pos, width) {
+        if (source.length <= width) {
+            return { out: source, nextPos: 0 };
+        }
+
+        const extended = source + "     ";
+
+        let showing = extended.substr(pos, width);
+        if (showing.length < width) {
+            showing += extended.substr(0, width - showing.length);
+        }
+
+        return {
+            out: showing,
+            nextPos: (pos + step) % extended.length
+        };
+    }
+
+    function update() {
+        if (!('mediaSession' in navigator)) return;
+
+        const date = new Date();
+        const time =
+            String(date.getHours()).padStart(2, '0') + ':' +
+            String(date.getMinutes()).padStart(2, '0')+ ' SERPUKHOV';
+
+        if (song !== lastSong) {
+            lastSong = song;
+            songPos = 0;
+        }
+
+        const t = scrollText(stationText, stationPos, titleWidth);
+        stationPos = t.nextPos;
+
+        const a = scrollText(song, songPos, artistWidth);
+        songPos = a.nextPos;
+
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: a.out,
+            artist: t.out,
+            album: time
+        });
+    }
+
+    window.radioUpdater = setInterval(update, 1000);
+    update();
+    console.log('Метаданные запущены');
+}
+
+function stopRadioMetadata() {
+    if (window.radioUpdater) {
+        clearInterval(window.radioUpdater);
+        window.radioUpdater = null;
+    }
+    if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = null;
+    }
+    console.log('Метаданные остановлены');
+}
+
+startRadioMetadata();
+
+
+function normalizeFilename(name) {
+
+    // 1. убираем префикс до первой точки
+    const dotIndex = name.indexOf(".");
+    if (dotIndex !== -1) {
+        name = name.slice(dotIndex + 1);
+    }
+
+    // 2. убираем расширение .mp3
+    name = name.replace(/\.mp3$/i, "");
+    
+    // 2,5. убираем (Unknown) везде 
+    name = name.replaceAll("(Unknown)", "");
+
+    // 3. заменяем _ на пробел
+    name = name.replace(/_/g, " ");
+
+    // 4. транслит
+    const map = {
+        А:"A", Б:"B", В:"V", Г:"G", Д:"D", Е:"E", Ё:"E", Ж:"ZH", З:"Z",
+        И:"I", Й:"Y", К:"K", Л:"L", М:"M", Н:"N", О:"O", П:"P", Р:"R",
+        С:"S", Т:"T", У:"U", Ф:"F", Х:"KH", Ц:"TS", Ч:"CH", Ш:"SH",
+        Щ:"SCH", Ы:"Y", Э:"E", Ю:"YU", Я:"YA",
+
+        Ь:"", Ъ:"",
+
+        а:"A", б:"B", в:"V", г:"G", д:"D", е:"E", ё:"E", ж:"ZH", з:"Z",
+        и:"I", й:"Y", к:"K", л:"L", м:"M", н:"N", о:"O", п:"P", р:"R",
+        с:"S", т:"T", у:"U", ф:"F", х:"KH", ц:"TS", ч:"CH", ш:"SH",
+        щ:"SCH", ы:"Y", э:"E", ю:"YU", я:"YA",
+
+        ь:"", ъ:""
+    };
+
+    name = name.split("").map(ch => map[ch] !== undefined ? map[ch] : ch).join("");
+
+    // 5. в верхний регистр
+    return name.toUpperCase();
+}
+
+    
     const blobsCache = {};
     // Убираем возможное дублирование объявления — используем глобальный объект
     window.pathToOriginalFileName = window.pathToOriginalFileName || {};
@@ -154,7 +275,7 @@
 
         queue.push({
           type: 'song',
-          title,
+          title: extractFileName(songSrc),
           songSrc,
           fileName: extractFileName(songSrc),
           comments
@@ -164,7 +285,7 @@
         if (songsSinceLastJingle >= 1 && JINGLES.length) {
           const jinglePath = `j/${getNextJingle()}`;
           const jingleSrc = await getBlobUrl(jinglePath);
-          queue.push({ type: 'jingle', title: '🎵 Джингл', songSrc: jingleSrc, fileName: extractFileName(jingleSrc) });
+          queue.push({ type: 'jingle', title: 'Jingle', songSrc: jingleSrc, fileName: extractFileName(jingleSrc) });
           songsSinceLastJingle = 0;
         }
 
@@ -174,7 +295,7 @@
           const adSrc = await getBlobUrl(`ads/${adObj.src}`);
           queue.push({
             type: 'ad',
-            title: '📢 Реклама',
+            title: 'Реклама',
             songSrc: adSrc,
             fileName: extractFileName(adSrc),
             adEndType: adObj.endType
@@ -189,6 +310,7 @@
       const queueDiv = document.getElementById('queue');
       const current = queue[playIndex] || {};
       nowDiv.innerHTML = `<div class="playing">🎧 Сейчас: ${current?.title || '---'} (${current?.fileName || ''})</div>`;
+      song = normalizeFilename(current?.title)
       queueDiv.innerHTML = queue.slice(playIndex + 1, playIndex + 10).map((item, i) => {
         let icon = '';
         if (item.type === 'ad') icon = '📢';
