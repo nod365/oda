@@ -131,6 +131,9 @@ function normalizeFilename(name) {
     
     // 2,5. убираем (Unknown) везде 
     name = name.replaceAll("(Unknown)", "");
+    
+    // 2,6. убираем (Jingle) везде 
+    name = name.replaceAll("Jingle", "HYPERPOP PLAZA");
 
     // 3. заменяем _ на пробел
     name = name.replace(/_/g, " ");
@@ -364,7 +367,7 @@ function normalizeFilename(name) {
 
       if (item.type === 'song') {
         const songData = SONGS[item.title];
-        const together = songData.together === 1;
+        const together = false; //songData.together === 1;
         const hasComment = item.comments.length > 0;
 
         if (together) {
@@ -410,6 +413,7 @@ function normalizeFilename(name) {
       } else if (item.type === 'jingle') {
         await playAudio(item.songSrc);
       } else if (item.type === 'hour-signal') {
+        await playAudio(await getBlobUrl(DTMF.sovietBeep));
         await playAudio(item.songSrc);
         await playAudio(await getBlobUrl(DTMF.newHour));
       }
