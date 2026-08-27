@@ -48,6 +48,22 @@ let stationPos = 0;          // позиция прокрутки title
 const titleWidth = 15;       // ширина окна title
 
 const step = 3;              // шаг прокрутки (как раньше)
+const UTC_PLUS_3_OFFSET_MS = 3 * 60 * 60 * 1000;
+
+function getUtcPlus3Date(date = new Date()) {
+    return new Date(date.getTime() + UTC_PLUS_3_OFFSET_MS);
+}
+
+function getUtcPlus3Hour(date = new Date()) {
+    return getUtcPlus3Date(date).getUTCHours();
+}
+
+function formatUtcPlus3Time(date = new Date()) {
+    const utcPlus3Date = getUtcPlus3Date(date);
+    const hours = String(utcPlus3Date.getUTCHours()).padStart(2, '0');
+    const minutes = String(utcPlus3Date.getUTCMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+}
 
 function startRadioMetadata() {
 
@@ -76,14 +92,7 @@ function startRadioMetadata() {
     function update() {
         if (!('mediaSession' in navigator)) return;
 
-        const moscowTime = new Intl.DateTimeFormat('ru-RU', {
-            timeZone: 'Europe/Moscow',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-        }).format(new Date());
-        
-        const time = moscowTime+ ' SERPUKHOV';
+        const time = formatUtcPlus3Time() + ' UTC+3 SERPUKHOV';
 
         if (song !== lastSong) {
             lastSong = song;
@@ -194,7 +203,7 @@ function normalizeFilename(name) {
 
     let queue = [];
     let playIndex = 0;
-    let currentHour = new Date().getHours();
+    let currentHour = getUtcPlus3Hour();
 
     let SONGS = {};
     let JINGLES = [];
@@ -330,7 +339,7 @@ function normalizeFilename(name) {
     let hourSignalPending = false;
 
     const checkAndQueueHourSound = () => {
-      const hour = new Date().getHours();
+      const hour = getUtcPlus3Hour();
       if (hour !== currentHour && hourSounds[hour]) {
         currentHour = hour;
         hourSignalPending = true;
