@@ -76,10 +76,14 @@ function startRadioMetadata() {
     function update() {
         if (!('mediaSession' in navigator)) return;
 
-        const date = new Date();
-        const time =
-            String(date.getHours()).padStart(2, '0') + ':' +
-            String(date.getMinutes()).padStart(2, '0')+ ' SERPUKHOV';
+        const moscowTime = new Intl.DateTimeFormat('ru-RU', {
+            timeZone: 'Europe/Moscow',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        }).format(new Date());
+        
+        const time = moscowTime+ ' SERPUKHOV';
 
         if (song !== lastSong) {
             lastSong = song;
